@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Scan - DR Detection System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0"><i class="bi bi-cloud-upload-fill"></i> Upload Fundus Image</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <!-- Patient Selection -->
+                        <div class="mb-4">
+                            <label for="patientSelect" class="form-label fw-bold">
+                                Select Patient *
+                            </label>
+                            <select class="form-select form-select-lg" id="patientSelect" name="patient_id" required>
+                                <option value="">Choose patient...</option>
+                                {% for patient in patients %}
+                                <option value="{{ patient.id }}">
+                                    {{ patient.name }} (Age: {{ patient.age }}, {{ patient.diabetes_type }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select the patient for this fundus scan</div>
+                        </div>
+
+                        <!-- File Upload Zone -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Fundus Image *</label>
+                            <div class="upload-zone" id="uploadZone">
+                                <input type="file" id="fileInput" name="fundus_image" accept="image/png,image/jpeg,image/jpg" hidden required>
+                                <div class="upload-content text-center py-5">
+                                    <i class="bi bi-cloud-arrow-up display-1 text-primary mb-3"></i>
+                                    <h5>Drag & Drop Image Here</h5>
+                                    <p class="text-muted">or</p>
+                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="bi bi-folder2-open"></i> Browse Files
+                                    </button>
+                                    <p class="small text-muted mt-3">
+                                        Supported formats: JPG, PNG, JPEG<br>
+                                        Maximum file size: 10MB
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="mb-4" style="display: none;">
+                            <label class="form-label fw-bold">Preview</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    <img id="previewImg" src="" alt="Preview" class="img-fluid rounded">
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="clearImage()">
+                                            <i class="bi bi-x-circle"></i> Remove Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Guidelines -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Image Guidelines</h6>
+                            <ul class="mb-0 small">
+                                <li>Ensure the fundus image is clear and well-focused</li>
+                                <li>Image should show the retina with good contrast</li>
+                                <li>Avoid blurry or underexposed images</li>
+                                <li>The optic disc should be visible in the image</li>
+                            </ul>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <i class="bi bi-cpu"></i> Analyze Image
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Progress Bar -->
+                    <div id="progressContainer" class="mt-4" style="display: none;">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-bold">Processing...</span>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Analyzing fundus image with AI model...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Uploads -->
+            <div class="card border-0 shadow mt-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Uploads</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Your recent scans will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

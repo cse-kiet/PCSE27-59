@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Patients - DR Detection System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="bi bi-people-fill text-primary"></i> Patient Management</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+                    <i class="bi bi-person-plus-fill"></i> Add New Patient
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search patients by name, ID, or email...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterDiabetes">
+                <option value="">All Diabetes Types</option>
+                <option value="Type 1">Type 1</option>
+                <option value="Type 2">Type 2</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filterGender">
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Patients Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Diabetes Type</th>
+                            <th>Last Visit</th>
+                            <th>HbA1c</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr data-diabetes="{{ patient.diabetes_type }}" data-gender="{{ patient.gender }}">
+                            <td><span class="badge bg-secondary">{{ patient.id }}</span></td>
+                            <td>
+                                <strong>{{ patient.name }}</strong>
+                                <br><small class="text-muted">{{ patient.contact }}</small>
+                            </td>
+                            <td>{{ patient.age }}</td>
+                            <td>
+                                <i class="bi bi-{{ 'gender-male' if patient.gender == 'Male' else 'gender-female' }}"></i>
+                                {{ patient.gender }}
+                            </td>
+                            <td><span class="badge bg-info">{{ patient.diabetes_type }}</span></td>
+                            <td>{{ patient.last_visit }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if patient.hba1c < 7 else 'warning' if patient.hba1c < 8 else 'danger' }}">
+                                    {{ patient.hba1c }}%
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/patient/{{ patient.id }}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-success" title="New Scan" onclick="location.href='/upload'">
+                                    <i class="bi bi-camera"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal fade" id="addPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus"></i> Add New Patient</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPatientForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Age *</label>
+                            <input type="number" class="form-control" min="1" max="120" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Gender *</label>
+                            <select class="form-select" required>
+                                <option value="">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Diabetes Type *</label>
+                            <select class="form-select" required>
+                                <option value="">Select...</option>
+                                <option value="Type 1">Type 1</option>
+                                <option value="Type 2">Type 2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Diagnosis Date</label>
+                            <input type="date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note:</strong> This is a demo. Patient data will not be permanently saved.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addPatientDemo()">
+                    <i class="bi bi-check-circle"></i> Add Patient
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#patientsTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Filter by diabetes type
+document.getElementById('filterDiabetes').addEventListener('change', function() {
+    filterTable();
+});
+
+// Filter by gender
+document.getElementById('filterGender').addEventListener('change', function() {
+    filterTable();
+});
+
+function filterTable() {
+    const diabetesFilter = document.getElementById('filterDiabetes').value;
+    const genderFilter = document.getElementById('filterGender').value;
+    const rows = document.querySelectorAll('#patientsTable tbody tr');
+    
+    rows.forEach(row => {
+        const diabetes = row.dataset.diabetes;
+        const gender = row.dataset.gender;
+        
+        const matchesDiabetes = !diabetesFilter || diabetes === diabetesFilter;
+        const matchesGender = !genderFilter || gender === genderFilter;
+        
+        row.style.display = (matchesDiabetes && matchesGender) ? '' : 'none';
+    });
+}
+
+function addPatientDemo() {
+    alert('Demo mode: Patient registration would be saved to database in production.');
+    bootstrap.Modal.getInstance(document.getElementById('addPatientModal')).hide();
+}
+</script>
+{% endblock %}

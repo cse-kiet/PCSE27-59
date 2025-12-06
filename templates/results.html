@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - DR Detection System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-file-medical-fill text-primary"></i>
+                        Analysis Results
+                    </h2>
+                    <p class="text-muted">Scan ID: #{{ scan.scan_id }} | Date: {{ scan.upload_date }}</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Print Report
+                    </button>
+                    <a href="/upload" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> New Scan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Patient Information -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Patient Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if patient %}
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Name:</th>
+                            <td>{{ patient.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Age:</th>
+                            <td>{{ patient.age }} years</td>
+                        </tr>
+                        <tr>
+                            <th>Gender:</th>
+                            <td>{{ patient.gender }}</td>
+                        </tr>
+                        <tr>
+                            <th>Diabetes Type:</th>
+                            <td><span class="badge bg-info">{{ patient.diabetes_type }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>Blood Sugar:</th>
+                            <td>{{ patient.blood_sugar }} mg/dL</td>
+                        </tr>
+                        <tr>
+                            <th>HbA1c:</th>
+                            <td>
+                                <span class="badge bg-{{ 'success' if patient.hba1c < 7 else 'warning' if patient.hba1c < 8 else 'danger' }}">
+                                    {{ patient.hba1c }}%
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <a href="/patient/{{ patient.id }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                        <i class="bi bi-eye"></i> View Full Profile
+                    </a>
+                    {% else %}
+                    <p class="text-muted">Patient information not available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Fundus Image -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-image"></i> Fundus Image</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename=scan.image_path) }}" 
+                         alt="Fundus Image" 
+                         class="img-fluid rounded"
+                         style="max-height: 400px; cursor: pointer;"
+                         onclick="openImageModal(this.src)">
+                    <p class="text-muted mt-2 small">Click image to enlarge</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results -->
+    <div class="row g-4 mt-2">
+        <!-- Detection Result -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle"></i> Detection Result</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            {% set result = scan.analysis_result %}
+                            {% if result.severity == 'None' %}
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                            {% elif result.severity in ['Mild', 'Moderate'] %}
+                                <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 4rem;"></i>
+                            {% else %}
+                                <i class="bi bi-exclamation-octagon-fill text-danger" style="font-size: 4rem;"></i>
+                            {% endif %}
+                        </div>
+                        <h3 class="fw-bold">{{ result.condition }}</h3>
+                        <div class="my-3">
+                            <span class="badge bg-{{ 'success' if result.severity == 'None' else 'warning' if result.severity == 'Mild' else 'danger' }} fs-6 px-3 py-2">
+                                Severity: {{ result.severity }}
+                            </span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confidence Score</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar bg-{{ 'success' if result.confidence > 90 else 'info' if result.confidence > 80 else 'warning' }}" 
+                                     role="progressbar" 
+                                     style="width: {{ result.confidence }}%">
+                                    {{ result.confidence }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-{{ 'success' if result.risk_level == 'Low' else 'warning' if result.risk_level == 'Medium' else 'danger' }}">
+                            <strong>Risk Level:</strong> {{ result.risk_level }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Findings & Recommendations -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-search"></i> Clinical Findings</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for finding in scan.analysis_result.findings %}
+                        <li class="list-group-item">
+                            <i class="bi bi-dot text-primary"></i> {{ finding }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for recommendation in scan.analysis_result.recommendations %}
+                        <li class="list-group-item">
+                            <i class="bi bi-check2-circle text-success"></i> {{ recommendation }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medical Disclaimer -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Medical Disclaimer</h6>
+                <p class="mb-0 small">
+                    This analysis is generated by an AI system and should be used as a screening tool only. 
+                    It is not a substitute for professional medical diagnosis. All results should be reviewed 
+                    by a qualified ophthalmologist or healthcare professional before making treatment decisions.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Fundus Image - Full View</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Full size" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+</script>
+{% endblock %}

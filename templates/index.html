@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - DR Detection System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-card p-4 rounded shadow-sm">
+                <h1 class="display-5 fw-bold mb-3">
+                    <i class="bi bi-heart-pulse text-danger"></i>
+                    Diabetic Retinopathy Detection System
+                </h1>
+                <p class="lead">AI-powered fundus image analysis for early detection and patient management</p>
+                <div class="mt-3">
+                    <a href="/upload" class="btn btn-primary btn-lg me-2">
+                        <i class="bi bi-cloud-upload"></i> New Scan
+                    </a>
+                    <a href="/patients" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-people"></i> View Patients
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Total Patients</p>
+                            <h2 class="fw-bold mb-0">{{ total_patients }}</h2>
+                        </div>
+                        <div class="stat-icon bg-primary">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-success">
+                            <i class="bi bi-arrow-up"></i> Active records
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Total Scans</p>
+                            <h2 class="fw-bold mb-0">{{ total_scans }}</h2>
+                        </div>
+                        <div class="stat-icon bg-info">
+                            <i class="bi bi-eye-fill"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-info">
+                            <i class="bi bi-clock"></i> All time
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Detection Rate</p>
+                            <h2 class="fw-bold mb-0">{{ detection_rate }}%</h2>
+                        </div>
+                        <div class="stat-icon bg-warning">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-warning">
+                            <i class="bi bi-graph-up"></i> DR detected
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">High Risk Cases</p>
+                            <h2 class="fw-bold mb-0">{{ severity_counts.Severe + severity_counts.Proliferative }}</h2>
+                        </div>
+                        <div class="stat-icon bg-danger">
+                            <i class="bi bi-shield-exclamation"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-danger">
+                            <i class="bi bi-bell-fill"></i> Requires attention
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Charts Section -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart-fill text-primary"></i> Severity Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="severityChart" height="100"></canvas>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart-fill text-info"></i> Patient Age Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="ageChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-clock-history text-success"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        {% for scan in recent_scans %}
+                        <div class="activity-item mb-3">
+                            <div class="d-flex">
+                                <div class="activity-icon me-3">
+                                    <i class="bi bi-camera-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ scan.patient_name }}</h6>
+                                    <p class="small text-muted mb-1">{{ scan.analysis_result.condition }}</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> {{ scan.upload_date }}
+                                    </small>
+                                    <a href="/results/{{ scan.scan_id }}" class="btn btn-sm btn-outline-primary mt-2">
+                                        View Details
+                                    </a>
+                                </div>
+                                <span class="badge bg-{{ 'success' if scan.analysis_result.severity == 'None' else 'warning' if scan.analysis_result.severity == 'Mild' else 'danger' }}">
+                                    {{ scan.analysis_result.severity }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                        
+                        {% if not recent_scans %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mt-2">No recent activity</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+    // Initialize charts with data from server
+    const severityData = {{ severity_counts|tojson }};
+    initializeSeverityChart(severityData);
+    initializeAgeChart();
+</script>
+{% endblock %}
